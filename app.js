@@ -92,12 +92,15 @@ async function handleRedirect() {
 handleRedirect();
 
 async function getPlaylist() {
-  console.log("🔍 Access Token inside getPlaylist():", accessToken); // log it
+  console.log("🔍 Access Token inside getPlaylist():", accessToken);
 
   if (!accessToken) {
     alert("Please login first.");
     return;
   }
+
+  const downloadBtn = document.querySelector('button[onclick="getPlaylist()"]');
+  downloadBtn.disabled = true; // 🔒 disable the button
 
   const url = document.getElementById("playlistURL").value;
   const playlistId = url.split("/playlist/")[1].split("?")[0];
@@ -128,16 +131,25 @@ async function getPlaylist() {
 
   document.getElementById("output").textContent = allTracks.join("\n");
 
-  const response = await fetch(backendUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ songs: allTracks })
-  });
+  try {
+    const response = await fetch(backendUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ songs: allTracks })
+    });
 
-  const blob = await response.blob();
-  const urlBlob = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = urlBlob;
-  a.download = 'playlist.zip';
-  a.click();
+    const blob = await response.blob();
+    const urlBlob = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = urlBlob;
+    a.download = 'playlist.zip';
+    a.click();
+  } catch (err) {
+    alert("Download failed. See console for details.");
+    console.error(err);
+  }
+
+  downloadBtn.disabled = false; // 🔓 re-enable after download
+  document.getElementById("playlistURL").value = "";
+
 }

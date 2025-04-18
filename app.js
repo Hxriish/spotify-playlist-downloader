@@ -59,17 +59,29 @@ async function handleRedirect() {
     code_verifier: codeVerifier
   });
 
-  const res = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString()
-  });
+  try {
+    const res = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString()
+    });
 
-  const data = await res.json();
-  accessToken = data.access_token;
+    const data = await res.json();
 
-  // ✅ redirect back to index after success
-  window.location.href = "index.html";
+    if (data.error) {
+      console.error("Spotify token error:", data);
+      alert("Failed to log in: " + data.error_description);
+      return;
+    }
+
+    accessToken = data.access_token;
+    console.log("Access Token:", accessToken);
+
+    window.location.href = "index.html"; // redirect back after token is saved
+  } catch (err) {
+    console.error("Token request failed:", err);
+    alert("Something went wrong during login.");
+  }
 }
 
 // Call this on every page load

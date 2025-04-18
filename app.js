@@ -67,6 +67,9 @@ async function handleRedirect() {
 
   const data = await res.json();
   accessToken = data.access_token;
+
+  // ✅ redirect back to index after success
+  window.location.href = "index.html";
 }
 
 // Call this on every page load

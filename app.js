@@ -2,11 +2,11 @@
 
 const clientId = '8c4a9b0458fc46e2806e8daf6f3df6b5';
 const redirectUri = 'https://hxriish.github.io/spotify-playlist-downloader/callback.html';
-const backendUrl = 'https://your-backend-url.com/download'; // Replace with your actual backend URL
+const backendUrl = 'https://your-backend-url.com/download';
 const scopes = 'playlist-read-private playlist-read-collaborative';
 
-let accessToken = null;
-accessToken = localStorage.getItem("spotify_access_token");
+let accessToken = localStorage.getItem("spotify_access_token"); // ✅ Load on every page load
+
 
 // Generate random string for PKCE code verifier
 function generateRandomString(length) {
@@ -73,11 +73,9 @@ async function handleRedirect() {
       accessToken = data.access_token;
       console.log("✅ Access token received:", accessToken);
 
-      // Save token in localStorage so it persists after redirect
-      localStorage.setItem("spotify_access_token", accessToken);
+      localStorage.setItem("spotify_access_token", accessToken); // ✅ Save it
 
-      // Redirect back to main page
-      window.location.href = "index.html";
+      window.location.href = "index.html"; // ✅ Back to main page
     } else {
       console.error("❌ Token exchange error:", data);
       alert("Failed to log in: " + (data.error_description || "Unknown error"));
@@ -92,6 +90,8 @@ async function handleRedirect() {
 handleRedirect();
 
 async function getPlaylist() {
+  console.log("🔍 Access Token inside getPlaylist():", accessToken); // log it
+
   if (!accessToken) {
     alert("Please login first.");
     return;
@@ -126,7 +126,6 @@ async function getPlaylist() {
 
   document.getElementById("output").textContent = allTracks.join("\n");
 
-  // Send tracks to backend for download
   const response = await fetch(backendUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -139,4 +138,4 @@ async function getPlaylist() {
   a.href = urlBlob;
   a.download = 'playlist.zip';
   a.click();
-} 
+}

@@ -2,7 +2,7 @@
 
 const clientId = '8c4a9b0458fc46e2806e8daf6f3df6b5';
 const redirectUri = 'https://hxriish.github.io/spotify-playlist-downloader/callback.html';
-const backendUrl = 'https://your-backend-url.com/download';
+const backendUrl = 'http://localhost:3000/download';
 const scopes = 'playlist-read-private playlist-read-collaborative';
 
 let accessToken = localStorage.getItem("spotify_access_token"); // ✅ Load on every page load
@@ -73,9 +73,11 @@ async function handleRedirect() {
       accessToken = data.access_token;
       console.log("✅ Access token received:", accessToken);
 
-      localStorage.setItem("spotify_access_token", accessToken); // ✅ Save it
+      // Save token in localStorage so it persists after redirect
+      localStorage.setItem("spotify_access_token", accessToken);
 
-      window.location.href = "index.html"; // ✅ Back to main page
+      // Redirect back to main page
+      window.location.href = "index.html";
     } else {
       console.error("❌ Token exchange error:", data);
       alert("Failed to log in: " + (data.error_description || "Unknown error"));

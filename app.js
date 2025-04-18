@@ -1,6 +1,7 @@
 const clientId = '8c4a9b0458fc46e2806e8daf6f3df6b5'
 ; // Replace with your real ID
-const redirectUri = 'https://yourusername.github.io/spotify-playlist-downloader/callback.html';
+const redirectUri = 'const redirectUri = 'https://hxriish.github.io/spotify-playlist-downloader/callback.html';
+';
 const backendUrl = 'https://your-backend-url.com/download'; // Replace with deployed backend
 
 const scopes = 'playlist-read-private playlist-read-collaborative';

@@ -6,6 +6,7 @@ const backendUrl = 'https://your-backend-url.com/download'; // Replace with your
 const scopes = 'playlist-read-private playlist-read-collaborative';
 
 let accessToken = null;
+accessToken = localStorage.getItem("spotify_access_token");
 
 // Generate random string for PKCE code verifier
 function generateRandomString(length) {
@@ -68,18 +69,21 @@ async function handleRedirect() {
 
     const data = await res.json();
 
-    if (data.error) {
-      console.error("Spotify token error:", data);
-      alert("Failed to log in: " + data.error_description);
-      return;
+    if (data.access_token) {
+      accessToken = data.access_token;
+      console.log("✅ Access token received:", accessToken);
+
+      // Save token in localStorage so it persists after redirect
+      localStorage.setItem("spotify_access_token", accessToken);
+
+      // Redirect back to main page
+      window.location.href = "index.html";
+    } else {
+      console.error("❌ Token exchange error:", data);
+      alert("Failed to log in: " + (data.error_description || "Unknown error"));
     }
-
-    accessToken = data.access_token;
-    console.log("Access Token:", accessToken);
-
-    window.location.href = "index.html"; // redirect back after token is saved
   } catch (err) {
-    console.error("Token request failed:", err);
+    console.error("❌ Token fetch failed:", err);
     alert("Something went wrong during login.");
   }
 }

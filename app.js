@@ -8,7 +8,7 @@ let accessToken = null;
 
 // Redirect to Spotify login
 function login() {
-  const authUrl = `https://accounts.spotify.com/authorize?client_id=\${clientId}&response_type=token&redirect_uri=\${encodeURIComponent(redirectUri)}&scope=\${encodeURIComponent(scopes)}\`;
+  const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
   window.location = authUrl;
 }
 
@@ -35,16 +35,17 @@ async function getPlaylist() {
   const limit = 100;
 
   while (true) {
-    const res = await fetch(\`https://api.spotify.com/v1/playlists/\${playlistId}/tracks?limit=\${limit}&offset=\${offset}\`, {
+    const res = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=${limit}&offset=${offset}`, {
       headers: {
-        Authorization: \`Bearer \${accessToken}\`
+        Authorization: `Bearer ${accessToken}`
       }
     });
+
     const data = await res.json();
     if (data.items) {
       const tracks = data.items.map(item => {
         const track = item.track;
-        return \`\${track.artists[0].name} - \${track.name}\`;
+        return `${track.artists[0].name} - ${track.name}`;
       });
       allTracks.push(...tracks);
       if (data.items.length < limit) break;
@@ -71,3 +72,4 @@ async function getPlaylist() {
   a.download = 'playlist.zip';
   a.click();
 }
+

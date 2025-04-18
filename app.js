@@ -92,6 +92,7 @@ async function handleRedirect() {
 handleRedirect();
 
 async function getPlaylist() {
+  console.log("🚨 getPlaylist CALLED");
   console.log("🔍 Access Token inside getPlaylist():", accessToken);
 
   if (!accessToken) {

@@ -8,7 +8,7 @@ let accessToken = null;
 
 // Redirect to Spotify login
 function login() {
-  const authUrl = \`https://accounts.spotify.com/authorize?client_id=\${clientId}&response_type=token&redirect_uri=\${encodeURIComponent(redirectUri)}&scope=\${encodeURIComponent(scopes)}\`;
+  const authUrl = `https://accounts.spotify.com/authorize?client_id=\${clientId}&response_type=token&redirect_uri=\${encodeURIComponent(redirectUri)}&scope=\${encodeURIComponent(scopes)}\`;
   window.location = authUrl;
 }
 

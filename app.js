@@ -1,26 +1,76 @@
-const clientId = '8c4a9b0458fc46e2806e8daf6f3df6b5'
-; // Replace with your real ID
-const redirectUri = 'https://hxriish.github.io/spotify-playlist-downloader/callback.html';
-const backendUrl = 'https://your-backend-url.com/download'; // Replace with deployed backend
+// === app.js (PKCE Flow Implementation) ===
 
+const clientId = '8c4a9b0458fc46e2806e8daf6f3df6b5';
+const redirectUri = 'https://hxriish.github.io/spotify-playlist-downloader/callback.html';
+const backendUrl = 'https://your-backend-url.com/download'; // Replace with your actual backend URL
 const scopes = 'playlist-read-private playlist-read-collaborative';
+
 let accessToken = null;
 
-// Redirect to Spotify login
-function login() {
-  const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+// Generate random string for PKCE code verifier
+function generateRandomString(length) {
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  return Array.from({ length }, () => possible.charAt(Math.floor(Math.random() * possible.length))).join('');
+}
+
+function sha256(plain) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(plain);
+  return crypto.subtle.digest('SHA-256', data);
+}
+
+function base64urlencode(a) {
+  return btoa(String.fromCharCode.apply(null, new Uint8Array(a)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+async function generateCodeChallenge(codeVerifier) {
+  const hashed = await sha256(codeVerifier);
+  return base64urlencode(hashed);
+}
+
+async function login() {
+  const codeVerifier = generateRandomString(128);
+  const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+  localStorage.setItem('code_verifier', codeVerifier);
+
+  const authUrl = `https://accounts.spotify.com/authorize?` +
+    `response_type=code&client_id=${clientId}&scope=${encodeURIComponent(scopes)}` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge_method=S256&code_challenge=${codeChallenge}`;
+
   window.location = authUrl;
 }
 
-// Extract access token
-if (window.location.hash) {
-  const hash = window.location.hash.substring(1).split('&').reduce((acc, cur) => {
-    const [key, value] = cur.split('=');
-    acc[key] = decodeURIComponent(value);
-    return acc;
-  }, {});
-  accessToken = hash.access_token;
+// Extract token using authorization code
+async function handleRedirect() {
+  const code = new URLSearchParams(window.location.search).get('code');
+  const codeVerifier = localStorage.getItem('code_verifier');
+
+  if (!code) return;
+
+  const body = new URLSearchParams({
+    client_id: clientId,
+    grant_type: 'authorization_code',
+    code,
+    redirect_uri: redirectUri,
+    code_verifier: codeVerifier
+  });
+
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString()
+  });
+
+  const data = await res.json();
+  accessToken = data.access_token;
 }
+
+// Call this on every page load
+handleRedirect();
 
 async function getPlaylist() {
   if (!accessToken) {
@@ -40,7 +90,6 @@ async function getPlaylist() {
         Authorization: `Bearer ${accessToken}`
       }
     });
-
     const data = await res.json();
     if (data.items) {
       const tracks = data.items.map(item => {
@@ -71,5 +120,4 @@ async function getPlaylist() {
   a.href = urlBlob;
   a.download = 'playlist.zip';
   a.click();
-}
-
+} 

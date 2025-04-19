@@ -1,14 +1,11 @@
-// === app.js (PKCE Flow Implementation) ===
-
 const clientId = '8c4a9b0458fc46e2806e8daf6f3df6b5';
 const redirectUri = 'https://hxriish.github.io/spotify-playlist-downloader/callback.html';
 const backendUrl = 'http://localhost:3000/download';
 const scopes = 'playlist-read-private playlist-read-collaborative';
 
-let accessToken = localStorage.getItem("spotify_access_token"); // ✅ Load on every page load
+let accessToken = localStorage.getItem("spotify_access_token");
 
-
-// Generate random string for PKCE code verifier
+// === PKCE Flow ===
 function generateRandomString(length) {
   const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
   return Array.from({ length }, () => possible.charAt(Math.floor(Math.random() * possible.length))).join('');
@@ -22,9 +19,7 @@ function sha256(plain) {
 
 function base64urlencode(a) {
   return btoa(String.fromCharCode.apply(null, new Uint8Array(a)))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 async function generateCodeChallenge(codeVerifier) {
@@ -35,7 +30,6 @@ async function generateCodeChallenge(codeVerifier) {
 async function login() {
   const codeVerifier = generateRandomString(128);
   const codeChallenge = await generateCodeChallenge(codeVerifier);
-
   localStorage.setItem('code_verifier', codeVerifier);
 
   const authUrl = `https://accounts.spotify.com/authorize?` +
@@ -45,7 +39,6 @@ async function login() {
   window.location = authUrl;
 }
 
-// Extract token using authorization code
 async function handleRedirect() {
   const code = new URLSearchParams(window.location.search).get('code');
   const codeVerifier = localStorage.getItem('code_verifier');
@@ -72,11 +65,7 @@ async function handleRedirect() {
     if (data.access_token) {
       accessToken = data.access_token;
       console.log("✅ Access token received:", accessToken);
-
-      // Save token in localStorage so it persists after redirect
       localStorage.setItem("spotify_access_token", accessToken);
-
-      // Redirect back to main page
       window.location.href = "index.html";
     } else {
       console.error("❌ Token exchange error:", data);
@@ -88,7 +77,6 @@ async function handleRedirect() {
   }
 }
 
-// Call this on every page load
 handleRedirect();
 
 async function getPlaylist() {
@@ -101,10 +89,16 @@ async function getPlaylist() {
   }
 
   const downloadBtn = document.querySelector('button[onclick="getPlaylist()"]');
-  downloadBtn.disabled = true; // 🔒 disable the button
+  downloadBtn.disabled = true;
 
   const url = document.getElementById("playlistURL").value;
-  const playlistId = url.split("/playlist/")[1].split("?")[0];
+  const playlistId = url.split("/playlist/")[1]?.split("?")[0];
+  if (!playlistId) {
+    alert("Invalid playlist URL");
+    downloadBtn.disabled = false;
+    return;
+  }
+
   let allTracks = [];
   let offset = 0;
   const limit = 100;
@@ -125,10 +119,12 @@ async function getPlaylist() {
       if (data.items.length < limit) break;
       offset += limit;
     } else {
-      console.error(data);
+      console.error("❌ Failed to fetch playlist data:", data);
       break;
     }
   }
+
+  console.log("📤 Sending to backend:", allTracks);
 
   document.getElementById("output").textContent = allTracks.join("\n");
 
@@ -139,6 +135,8 @@ async function getPlaylist() {
       body: JSON.stringify({ songs: allTracks })
     });
 
+    console.log("📦 Backend responded:", response);
+
     const blob = await response.blob();
     const urlBlob = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -147,10 +145,9 @@ async function getPlaylist() {
     a.click();
   } catch (err) {
     alert("Download failed. See console for details.");
-    console.error(err);
+    console.error("❌ Error during fetch/post:", err);
   }
 
-  downloadBtn.disabled = false; // 🔓 re-enable after download
+  downloadBtn.disabled = false;
   document.getElementById("playlistURL").value = "";
-
 }
